@@ -13,6 +13,21 @@ Formalisierung der Debatte um Pauschalurteile — als ehrliches Lean-4-Modell.
 
 **Der Einwand der Gegenseite**: „Pauschalaussagen gelten nicht."
 
+**Terminologie, fixiert (Review-Punkt 2)**: Das Wort „Pauschale" schwankte in
+früheren Kommentaren dieses Modells zwischen zwei Bedeutungen — ab jetzt
+benennt das Modell nur noch die beiden Präzisionsbegriffe:
+- **Konstant-Urteil** (formalisiert in `Konstant`/`Klassenfrei`, Ebene 1):
+  `u a = u b` für alle `a b` — ein Urteil, das kein Individuum vom anderen
+  unterscheidet.
+- **Mengenurteil** (Ebene 2): die ∀-, ∃- und Mehrheit-Formen — ein Urteil
+  ÜBER die ganze Menge, das sehr wohl zwischen Individuen trennt
+  (`mehrheit_impliziert_nicht_instanz` beweist: Ein Mengenurteil ist kein
+  Konstant-Urteil).
+Das Wort „Pauschale" steht im Folgenden nur noch in wörtlichen Zitaten der
+Debatte (Ricks Thesen, der Einwand der Gegenseite) und in Theorem-Namen, die
+Vertragsbestand und unveränderlich sind; der Kommentar an jeder solchen
+Stelle sagt, welcher Präzisionsbegriff gemeint ist.
+
 **Ehrlichkeitsvertrag dieses Modells** (bindend):
 - Kein Ergebnis wird behauptet, das nicht bewiesen ist. Nicht Beweisbares wird
   abgeschwächt, und die Schwächung wird als Kommentar dokumentiert.
@@ -20,7 +35,7 @@ Formalisierung der Debatte um Pauschalurteile — als ehrliches Lean-4-Modell.
 - Grenzen werden mit Prädikaten benannt, nicht als Mauer: Die Aussagen gelten
   *unter* den Prädikaten (endliches Ensemble, entscheidbares Urteil,
   keine Klassenzugehörigkeit) — die Prädikate stehen in den Typen.
-- Der Preis der Pauschalisierung (Informationsverlust über das Individuum)
+- Der Preis des Konstant-Urteils (Informationsverlust über das Individuum)
   wird als bewiesenes Typ-Statement sichtbar gemacht, nicht wegerklärt.
 - `#print axioms` am Dateiende weist für jedes Theorem die Axiom-Nutzung aus.
   Das Modell deklariert **keine eigenen Axiome**. Der Claim des Modells ist
@@ -29,21 +44,29 @@ Formalisierung der Debatte um Pauschalurteile — als ehrliches Lean-4-Modell.
 **Aufbau**:
 - *Rahmen*: Prädikate und Grundbegriffe (Umbenennung, Klassenfrei, Konstant,
   Endlich, Dressur/Bildung).
-- *Ebene 1*: `pauschal_eindeutig` — wer nicht klassifiziert, kann nur pauschal
-  urteilen; und: für endliche Ensembles mit entscheidbarem Urteil ist das
-  Pauschal-Urteil machbar (entscheidbar).
-- *Ebene 2*: `keine_lizenz_fuer_einzelurteil` — das Ensemble-Urteil liziert
+- *Ebene 1*: `pauschal_eindeutig` — wer nicht klassifiziert, kann nur konstant
+  urteilen; und: für endliche Ensembles mit entscheidbarem Urteil sind die
+  Mengenurteile (∀, ∃) machbar (entscheidbar).
+- *Ebene 2*: `keine_lizenz_fuer_einzelurteil` — das Mengenurteil liziert
   kein Einzelurteil, außer es ist das absolut-richtige (∀-)Urteil.
-- *Ebene 3*: Dressur (Basis) und Bildung (Basis + Instanz-Korrektur): die
-  Korrektur spezialisiert die Basis, sie ersetzt sie nicht — und sie kostet:
-  Wer korrigiert, klassifiziert.
+- *Ebene 3*: Dressur (Basis, als Typ erzwungen: ein Konstant-Urteil) und
+  Bildung (Basis + Instanz-Korrektur): die Korrektur spezialisiert die Basis,
+  sie ersetzt sie nicht — und sie kostet: Wer korrigiert, klassifiziert.
+- *Ebene 4*: die Merkmals-Achse (Review-Punkt 1) — `Objekt` = Kennung +
+  Merkmal. Namens-Unabhängigkeit ist nicht Konstanz
+  (`namens_unabhaengig_nicht_identisch_mit_konstant`), Merkmals-Klassen
+  entstehen ohne Gruppen-Nennung (`merkmalsklassen_sind_klassenbildung`),
+  und der Kernsatz aus Ebene 1 bleibt gültig, auf der anderen Achse
+  (`pauschal_eindeutig_gilt_weiterhin`).
 - *Bilanz*: `#eval` (Prüfen statt glauben) und `#print axioms` (Axiom-Nutzung).
 -/
 
 /-! ## Rahmen: Prädikate in Typen -/
 
 /-- Eine Umbenennung ist eine Bijektion des Ensembles auf sich.
-Ein Urteil, das „keine Klasse referenziert", darf von ihr nicht abhängen. -/
+Ein Urteil, das „keine Klasse referenziert", darf von ihr nicht abhängen.
+(Ebene 4 verfeinert das: Wessen Achse umbenannt wird — die Elemente als
+Ganze oder nur ihre Namen — entscheidet, was „nicht abhängen" heißt.) -/
 structure Umbenennung (α : Type) where
   vor : α → α
   zurueck : α → α
@@ -81,13 +104,16 @@ def vertausche [DecidableEq α] (a b : α) : Umbenennung α where
   her x := tausch_invol a b x
 
 /-- **Klassenfrei**: ein Urteil über α, das unter jeder Umbenennung invariant
-ist. Es referenziert nirgends die Zugehörigkeit einzelner Elemente zu einer
-Teilmenge — wäre das Urteil an einer Klasse festgemacht, gäbe es eine
-Umbenennung, an der es bricht. -/
+ist. Lesart auf nackten Elementen (ohne Merkmals-Achse, Ebenen 1–3): Es
+referenziert nirgends die Zugehörigkeit einzelner Elemente zu einer
+Teilmenge — wäre das Urteil an einer vorbestehenden Klasse festgemacht, gäbe
+es eine Umbenennung, an der es bricht. (Ebene 4 trennt diese Lesart auf:
+Sobald Elemente ein Merkmal tragen, gibt es unterscheidende Urteile, die
+dennoch jeden Namen ignorieren — ihre Klassen entstehen am Merkmal.) -/
 def Klassenfrei {α : Type} (u : α → Prop) : Prop :=
   ∀ (ρ : Umbenennung α) (x : α), u (ρ.vor x) = u x
 
-/-- **Konstant**: das Urteil unterscheidet keine Elemente — die pauschale Form.
+/-- **Konstant**: das Konstant-Urteil — es unterscheidet keine Elemente.
 Die Urteilswerte sind als Gleichheit von Propositionen pointweise gleich. -/
 def Konstant {α : Type} (u : α → Prop) : Prop :=
   ∀ a b : α, u a = u b
@@ -138,9 +164,12 @@ referenzieren."
 3. *Stärker und beweisbar*: `pauschal_eindeutig` unten quantifiziert über
    JEDE Urteilsfunktion `u : α → Prop` — egal ob berechenbar, klassisch oder
    noch so mächtig: jede klassenfreie Funktion ist konstant, und die
-   Kontraposition (`unterscheidung_braucht_klassenbildung`) sagt: wer
-   unterscheidet, referenziert Klassenzugehörigkeit. Das deckt jeden
-   erdenklichen Entscheider ab, statt seine Existenz zu leugnen.
+   Kontraposition (`unterscheidung_braucht_klassenbildung`) sagt: Wer auf
+   nackten Elementen unterscheidet, ist nicht klassenfrei. (Die frühere
+   Lesart „wer unterscheidet, referenziert Klassenzugehörigkeit" war zu
+   breit — Ebene 4 zeigt unterscheidende Urteile, die keine vorbestehende
+   Gruppe referenzieren: Ihre Klassen entstehen am Merkmal.) Das deckt
+   jeden erdenklichen Entscheider ab, statt seine Existenz zu leugnen.
 
 Damit gilt Ricks „das einzig Machbare" genau unter den Prädikaten, und nur
 unter ihnen (`klassenfrei_gilt_genau_wenn_pauschal`, `ueberAlle_entscheidbar`,
@@ -148,8 +177,10 @@ unter ihnen (`klassenfrei_gilt_genau_wenn_pauschal`, `ueberAlle_entscheidbar`,
 keine individuelle Verteilung. Die Prädikate stehen in den Typen — nicht
 im Wortlaut. -/
 
-/-- **Ebene 1, Kern**: Jedes klassenfreie Urteil ist konstant — die
-Pauschale ist die einzige klassenfreie Urteilsform. -/
+/-- **Ebene 1, Kern**: Jedes klassenfreie Urteil ist ein Konstant-Urteil —
+das Konstant-Urteil ist die einzige klassenfreie Urteilsform. (Der
+Theorem-Name ist historisch und Vertragsbestand; seine „Pauschale" ist
+hier das Konstant-Urteil.) -/
 theorem pauschal_eindeutig {α : Type} [DecidableEq α] {u : α → Prop}
     (h : Klassenfrei u) : Konstant u := by
   intro a b
@@ -164,13 +195,18 @@ theorem konstant_ist_klassenfrei {α : Type} {u : α → Prop}
   fun ρ x => h (ρ.vor x) x
 
 /-- „Das einzig Machbare" — ehrlich: unter dem Prädikat der Klassenfreiheit
-ist die Pauschale nicht nur machbar, sondern die *genaue* Urteilsform. -/
+ist das Konstant-Urteil nicht nur machbar, sondern die *genaue*
+Urteilsform. (Der Theorem-Name ist historisch und Vertragsbestand; seine
+„Pauschale" ist hier das Konstant-Urteil.) -/
 theorem klassenfrei_gilt_genau_wenn_pauschal {α : Type} [DecidableEq α]
     {u : α → Prop} : Klassenfrei u ↔ Konstant u :=
   ⟨pauschal_eindeutig, konstant_ist_klassenfrei⟩
 
-/-- **Kontraposition**: Ein Urteil, das zwei Elemente unterscheidet,
-referenziert Klassenzugehörigkeit — Unterscheidung *ist* Klassenbildung. -/
+/-- **Kontraposition**: Ein Urteil, das zwei Elemente unterscheidet, ist
+nicht klassenfrei. Auf nackten Elementen ist jede Unterscheidung damit
+zwangsläufig Klassenbildung. (Ob sie dabei eine *vorbestehende* Gruppe
+referenzieren muss, entscheidet erst Ebene 4: nein — die Alarmregel bildet
+ihre Klassen am Merkmal, ohne je einen Gruppennamen zu lesen.) -/
 theorem unterscheidung_braucht_klassenbildung {α : Type} [DecidableEq α]
     {u : α → Prop} {a b : α} (h : u a ≠ u b) : ¬ Klassenfrei u := by
   intro hk
@@ -181,7 +217,7 @@ theorem unterscheidung_braucht_klassenbildung {α : Type} [DecidableEq α]
 
 /-- **Machbarkeit 1**: Über ein endliches Ensemble ist das Über-alle-Urteil
 entscheidbar — konstruktiv, Element für Element, ohne klassische Axiome.
-Das ist der „Machbar"-Kern der Pauschalisierung. (Ein `def`, kein `theorem`:
+Das ist der „Machbar"-Kern der Mengenurteile. (Ein `def`, kein `theorem`:
 der Wert IST die Entscheidung.) -/
 private def alleInListe {α : Type} {u : α → Prop} (inst : ∀ x : α, Decidable (u x)) :
     (l : List α) → Decidable (∀ x : α, x ∈ l → u x)
@@ -240,15 +276,20 @@ Das Ensemble-Urteil liziert ein Einzelurteil genau dann, wenn es das
 absolut-richtige (∀-)Urteil ist. Alles Schwächere — Existenz, Durchschnitt,
 Mehrheit — liziert nichts. Damit hat der Einwand „Pauschalaussagen gelten
 nicht" einen wahren Kern (keine Instanz-Lizenz), ist als Totalität aber
-widerlegt (es gibt gültige Pauschalen) — beides beweisbar. -/
+widerlegt (es gibt gültige Mengenurteile — etwa das ∀-Urteil) — beides
+beweisbar. -/
 
-/-- Die EINZE legitimierte Lizenz: nur das absolut-richtige Urteil (für alle
-Elemente bewiesen) gilt für ein konkretes Element. -/
+/-- Die EINZIG legitimierte Lizenz: nur das absolut-richtige Mengenurteil
+(∀-Form, für alle Elemente bewiesen) gilt für ein konkretes Element. (Der
+Theorem-Name ist historisch und Vertragsbestand; seine „Pauschale" ist hier
+das Mengenurteil.) -/
 theorem pauschale_liziert_wenn_absolut {α : Type} {u : α → Prop} {a : α}
     (h : ∀ x : α, u x) : u a := h a
 
 /-- Der Universal-Einwand „Pauschalaussagen gelten nicht" ist als Totalität
-widerlegt: Es gibt eine gültige Pauschale (für jedes α, auch für leere). -/
+widerlegt: Es gibt ein gültiges Mengenurteil (∀-Form, für jedes α, auch für
+leere). (Der Theorem-Name ist historisch und Vertragsbestand; seine
+„Pauschalen" sind hier Mengenurteile.) -/
 theorem es_gibt_gueltige_pauschalen {α : Type} :
     ∃ u : α → Prop, ∀ x : α, u x :=
   ⟨fun _ => True, fun _ => True.intro⟩
@@ -323,16 +364,30 @@ theorem mehrheit_impliziert_nicht_instanz :
 
 /-! ## Ebene 3: Korrektur — Dressur als Basis, Bildung als Überschreibung
 
-Strukturvererbung analog OO: Die Basis (`Dressur`) ist die ererbte
-Standard-Pauschale. `Bildung` erweitert sie um das Korrekturfeld
-(`ausnahme`) — Bildung hat Dressur als Basis und überschreibt sie
-fallweise. Die Instanz-Korrektur respektiert Ebene 2: Weil die Pauschale
-über das Individuum nichts sagt, entscheidet hier die Instanz selbst. -/
+Strukturvererbung analog OO: Die Basis (`Dressur`) ist das ererbte
+Konstant-Urteil — seit dem Review-Typfix (Punkt 3) erzwingt der Typ es auch.
+`Bildung` erweitert sie um das Korrekturfeld (`ausnahme`) — Bildung hat
+Dressur als Basis und überschreibt sie fallweise. Die Instanz-Korrektur
+respektiert Ebene 2: Weil das Konstant-Urteil über das Individuum nichts
+sagt, entscheidet hier die Instanz selbst. -/
 
-/-- **Dressur**: die ererbte Standard-Pauschale — ein Urteil über das
-Ensemble, das kein Individuum kennt. -/
+/-- **Dressur**: die ererbte Basis — ein Konstant-Urteil über das Ensemble.
+Der Typ erzwingt jetzt, was der Kommentar früher nur versprach: Das Feld
+`urteil_konstant` hält den Beweis, dass die Urteilsfunktion kein Individuum
+vom anderen unterscheidet — „Dressur kennt kein Individuum" ist damit ein
+Typ-Statement. (Wahl dokumentiert, Review-Punkt 3: Statt den Kommentar
+zurückzunehmen, steht das Prädikat im Typ — so verlangt es der
+Ehrlichkeitsvertrag dieses Modells: Zusagen und Grenzen stehen in den
+Typen, nicht im Wortlaut.) -/
 structure Dressur (α : Type) where
   urteil : α → Prop
+  urteil_konstant : Konstant urteil
+
+/-- Die Typ-Fixierung zahlt sich aus: Das Urteil jeder Dressur ist
+klassenfrei — die ererbte Basis übersteht jede Umbenennung aus Ebene 1. -/
+theorem dressur_urteil_ist_klassenfrei {α : Type} (p : Dressur α) :
+    Klassenfrei p.urteil :=
+  konstant_ist_klassenfrei p.urteil_konstant
 
 /-- **Bildung**: Dressur als Basis, plus Instanz-Korrektur (Überschreibung).
 Das Korrekturfeld ist elementindiziert — es entscheidet einzelne Fälle. -/
@@ -374,20 +429,26 @@ theorem totale_ausnahme_schafft_basis_ab {α : Type} {k : Bildung α}
   fun heff => heff.2 (h a)
 
 /-- Ebene 2 in Ebene 3: Dieselbe Basis, entgegengesetzte Instanz-Ergebnisse.
-Die Pauschale allein bestimmt die Instanz nicht — erst die Instanz-Entscheidung
-(im Korrekturfeld) tut es. Genau deshalb ist die Korrektur DATA, kein Theorem:
-Sie kann aus dem Ensemble-Urteil nicht abgeleitet werden. -/
+Das Konstant-Urteil der Basis allein bestimmt die Instanz nicht — erst die
+Instanz-Entscheidung (im Korrekturfeld) tut es. Genau deshalb ist die
+Korrektur DATA, kein Theorem: Sie kann aus dem Basis-Urteil nicht abgeleitet
+werden. Zeuge: Die Basis ist das Konstant-Urteil auf den Wert `u a` (der Typ
+verlangt Konstanz); beide Korrekturen derselben Basis trennen die Instanz.
+(Der Theorem-Name ist historisch und Vertragsbestand; seine „Pauschale" ist
+hier das Basis-Urteil.) -/
 theorem pauschale_bestimmt_nicht_die_instanz {α : Type} {u : α → Prop} {a : α}
     (hu : u a) :
     ∃ k₁ k₂ : Bildung α, k₁.toDressur = k₂.toDressur ∧ k₁.effektiv a ∧ ¬ k₂.effektiv a :=
-  ⟨⟨⟨u⟩, fun _ => False⟩, ⟨⟨u⟩, fun _ => True⟩, rfl,
+  ⟨⟨⟨fun _ => u a, fun _ _ => rfl⟩, fun _ => False⟩,
+    ⟨⟨fun _ => u a, fun _ _ => rfl⟩, fun _ => True⟩, rfl,
     ⟨hu, fun f => f⟩, fun heff => heff.2 True.intro⟩
 
-/-- **Die Kosten der Korrektur**: Die Basis gewährt `b`, die Ausnahme trifft
-`a`, verschont `b` — schon ist das effektive Urteil nicht mehr klassenfrei.
-Wer korrigiert, klassifiziert: Die Instanz-Korrektur ist selbst eine
-Klassenbildung und kostet die Pauschalität aus Ebene 1. Der Preis wird
-hier bewiesen, nicht bestritten. -/
+/-- **Die Kosten der Korrektur**: Die Basis — nach Typ ein Konstant-Urteil,
+also klassenfrei (`dressur_urteil_ist_klassenfrei`) — gewährt `b`, die
+Ausnahme trifft `a`, verschont `b`: Schon ist das effektive Urteil nicht
+mehr klassenfrei. Wer korrigiert, klassifiziert: Die Instanz-Korrektur ist
+selbst eine Klassenbildung und kostet die Klassenfreiheit, die die Basis
+aus Ebene 1 mitbringt. Der Preis wird hier bewiesen, nicht bestritten. -/
 theorem korrektur_bricht_pauschalitaet {α : Type} [DecidableEq α]
     {k : Bildung α} {a b : α} (hb : k.urteil b) (ha : k.ausnahme a)
     (hnb : ¬ k.ausnahme b) :
@@ -398,13 +459,175 @@ theorem korrektur_bricht_pauschalitaet {α : Type} [DecidableEq α]
   have heffa : k.effektiv a := by rw [hh]; exact heffb
   exact heffa.2 ha
 
+/-! ## Ebene 4: Die Merkmals-Achse — Unterscheidung ohne Gruppen-Nennung
+
+Ein externer Review hat ein Konstruktionsloch der Ebenen 1–3 benannt: Diese
+urteilen über *nackte* Elemente — bloße Kennungen ohne Merkmal. Dort gilt zu
+Recht: Wer unter JEDER Vertauschung invariant bleibt, kann nur konstant
+urteilen (`pauschal_eindeutig`). Aber die Kommentare lasen sich so, als
+könne eine Regel, die unterscheidet, das nur tun, weil sie eine
+*vorbestehende Gruppe* referenziert. Das ist zu viel behauptet: Die Regel
+„Alarm oberhalb von 80 °C" (1) fragt keine Kennung ab — sie ist
+namens-unabhängig; (2) unterscheidet dennoch Elemente; (3) referenziert
+keine vorbestehende Gruppe — die Klassen „Alarm" und „kein Alarm" ENTSTEHEN
+im Ergebnis des Urteils, am Merkmal.
+
+Ebenen 1–3 können diese Welt nicht ausdrücken, weil ihre Elemente kein
+Merkmal tragen. Ihre Vertauschung bewegt das Element ALS GANZES: Wandert das
+Merkmal mit, wandert das Urteil mit. Diese Ebene führt die zweite Achse ein
+— Umbenennungen, die NUR die Namen schreiben, während das Merkmal dem Objekt
+fest zugeordnet bleibt. Auf der Namen-Achse gilt die alte Identität nicht
+mehr: Namens-Unabhängigkeit ist NICHT Konstanz
+(`namens_unabhaengig_nicht_identisch_mit_konstant`), Merkmals-Klassen
+entstehen ohne Gruppen-Nennung (`merkmalsklassen_sind_klassenbildung`), und
+der Kernsatz aus Ebene 1 bleibt trotzdem richtig, weil seine Prämisse hier
+schlicht nicht erfüllt ist (`alarm_nicht_invariant_unter_ganztausch`,
+`pauschal_eindeutig_gilt_weiterhin`). Diese Ebene ist eine ERWEITERUNG, kein
+Umbau: Die 20 Theoreme der Ebenen 1–3 stehen unverändert. -/
+
+/-- Objekt = Kennung + Merkmal. Die Kennung ist der reine Name, das Merkmal
+trägt die informationelle Last. Bewusst `Nat` statt `Real` (Review-Vorgabe):
+Real-Beweise ziehen über `Classical` die Kernlogik-Axiome nach sich; `Nat`
+hält jeden Beweis dieser Ebene konstruktiv und axiom-frei — ein skalarer
+Messwert (Grad, Stück, Cent) trägt die Pointe vollständig. -/
+structure Objekt where
+  kennung : String
+  merkmal : Nat
+  deriving DecidableEq
+
+/-- Umbenennung auf der NAMEN-Achse: σ schreibt nur das Namensfeld um, das
+Merkmal bleibt dem Objekt fest zugeordnet. Das ist der entscheidende
+Unterschied zur Vertauschung aus Ebene 1, die (Kennung, Merkmal) als Paar
+bewegt: Hier wandert das Merkmal NICHT mit. -/
+def umbenenne (σ : String → String) (x : Objekt) : Objekt where
+  kennung := σ x.kennung
+  merkmal := x.merkmal
+
+/-- **Kennungsfrei**: das Pendant zu `Klassenfrei` auf der Namen-Achse —
+gleiche Gestalt, andere Achse. `Klassenfrei` verlangt Invarianz unter
+Umbenennungen des ELEMENTRAUMS, `Kennungsfrei` unter Umbenennungen des
+NAMENSRAUMS. Ein Urteil, das die Kennung nie liest, ist kennungsfrei — der
+Beweis unten nutzt nicht einmal, dass die Umbenennung bijektiv ist. -/
+def Kennungsfrei (u : Objekt → Prop) : Prop :=
+  ∀ (ρ : Umbenennung String) (x : Objekt), u (umbenenne ρ.vor x) = u x
+
+/-- Die Alarmregel: Alarm genau oberhalb von 80 — sie liest das Merkmal und
+nie die Kennung. -/
+def alarmRegel : Objekt → Prop := fun x => x.merkmal > 80
+
+/-- Zeuge heiß: Sensor-1, Messwert 90 — Alarm. -/
+def heiss : Objekt := ⟨"Sensor-1", 90⟩
+
+/-- Zeuge kalt: Sensor-2, Messwert 70 — kein Alarm. -/
+def kalt : Objekt := ⟨"Sensor-2", 70⟩
+
+/-- Zeuge gesunken: Sensor-1 nochmals, Messwert 70 — gleiche Kennung wie
+`heiss`, anderes Merkmal. -/
+def gesunken : Objekt := ⟨"Sensor-1", 70⟩
+
+/-- **Achsen-Trennung, allgemein**: Jedes Urteil, das nur vom Merkmal abhängt
+(u = f ∘ merkmal), ist kennungsfrei — unter jeder Umbenennung der Namen
+bleibt es sich gleich. Der Beweis nutzt die Bijektivität nicht einmal: Die
+Umbenennung schreibt nur an dem Feld, das ein Merkmal-Urteil nie liest. -/
+theorem merkmalurteil_ist_kennungsfrei (f : Nat → Prop) :
+    Kennungsfrei (fun x => f x.merkmal) :=
+  fun _ _ => rfl
+
+/-- **Ebene 4, Kern 1**: Namens-Unabhängigkeit ist NICHT identisch mit dem
+Konstant-Urteil. Auf nackten Elementen fielen beide zusammen — Ebenen 1–3
+konnten sie nicht trennen. Auf Objekten mit Merkmals-Achse fallen sie
+auseinander: Die Alarmregel ist kennungsfrei und trotzdem kein
+Konstant-Urteil. Genau der Sensor-Fall: Vertauscht man die Namen, bleibt
+jedes Urteil stehen — die Urteile folgen den Merkmalen, nicht den Namen. -/
+theorem namens_unabhaengig_nicht_identisch_mit_konstant :
+    ¬ (∀ u : Objekt → Prop, Kennungsfrei u → Konstant u) := by
+  intro h
+  have hf : Kennungsfrei alarmRegel :=
+    merkmalurteil_ist_kennungsfrei (fun n => n > 80)
+  have heq : alarmRegel heiss = alarmRegel kalt := h alarmRegel hf heiss kalt
+  have hh : alarmRegel heiss := by
+    show heiss.merkmal > 80
+    decide
+  have hkein : ¬ alarmRegel kalt := by
+    show ¬ (kalt.merkmal > 80)
+    decide
+  rw [heq] at hh
+  exact hkein hh
+
+/-- **Ebene 4, Kern 2**: Merkmals-Klassen sind Klassenbildung — ohne
+Gruppen-Nennung. Erstens liest die Alarmregel die Kennung nie: Gleiches
+Merkmal, gleiches Urteil, wie die Objekte auch heißen mögen (punktuell
+stärker als Umbenennungs-Invarianz). Zweitens unterscheidet sie trotzdem,
+und zwar schon bei identischer Kennung: derselbe Sensor, zwei Messungen,
+zwei Urteile. Die Klassen „Alarm" und „kein Alarm" entstehen im Ergebnis
+des Urteils, am Merkmal — kein vorbestehendes Gruppen-Label wird je
+referenziert. Das ist die saubere Form von „Unterscheidung braucht
+Merkmals-Referenz, keine Gruppen-Nennung". -/
+theorem merkmalsklassen_sind_klassenbildung :
+    (∀ x y : Objekt, x.merkmal = y.merkmal → alarmRegel x = alarmRegel y)
+    ∧ ∃ x y : Objekt, x.kennung = y.kennung ∧ alarmRegel x ≠ alarmRegel y := by
+  constructor
+  · intro x y h
+    exact congrArg (fun n => n > 80) h
+  · refine ⟨heiss, gesunken, rfl, ?_⟩
+    intro h
+    have hh : alarmRegel heiss := by
+      show heiss.merkmal > 80
+      decide
+    have hkein : ¬ alarmRegel gesunken := by
+      show ¬ (gesunken.merkmal > 80)
+      decide
+    rw [h] at hh
+    exact hkein hh
+
+/-- **Der Unterschied der Achsen, bewiesen**: Die Alarmregel ist NICHT
+klassenfrei im alten Sinn — Ebene 1s eigene Kontraposition
+(`unterscheidung_braucht_klassenbildung`) trifft sie. Der Grund ist
+mechanisch: Der Ganzttausch aus Ebene 1 vertauscht (Kennung, Merkmal) als
+Paar, die Merkmale wandern mit, und mit ihnen die Urteile — vertauscht man
+die heiße und die kalte Messung, steht am Platz der heißen die kalte, und
+das Urteil am Platz kehrt sich um. Genau deshalb trifft `pauschal_eindeutig`
+die Alarmregel nicht: Seine Prämisse ist hier schlicht nicht erfüllt. Der
+scheinbare Widerspruch zu `namens_unabhaengig_nicht_identisch_mit_konstant`
+löst sich auf: Die Sätze leben auf verschiedenen Vertauschungen. -/
+theorem alarm_nicht_invariant_unter_ganztausch : ¬ Klassenfrei alarmRegel := by
+  have hkein : ¬ alarmRegel kalt := by
+    show ¬ (kalt.merkmal > 80)
+    decide
+  have hneu : alarmRegel heiss ≠ alarmRegel kalt := by
+    intro h
+    have hh : alarmRegel heiss := by
+      show heiss.merkmal > 80
+      decide
+    rw [h] at hh
+    exact hkein hh
+  exact unterscheidung_braucht_klassenbildung hneu
+
+/-- **Versöhnung**: Der Kernsatz aus Ebene 1 gilt weiterhin — jetzt beweisbar
+auch auf dem neuen Typ `Objekt`. Kein Widerspruch zu
+`namens_unabhaengig_nicht_identisch_mit_konstant`, denn die Sätze leben auf
+verschiedenen Achsen: `pauschal_eindeutig` quantifiziert über
+Vertauschungen, die das Objekt ALS GANZES bewegen — wer sie übersteht,
+urteilt konstant; die Alarmregel übersteht sie nicht
+(`alarm_nicht_invariant_unter_ganztausch`). Grenzfall-Lesart der Ebenen
+1–3: Nackte Elemente tragen kein Merkmal, es gibt keine zweite Achse — der
+Ganzttausch ist die einzige Vertauschung, deshalb ist dort Invarianz unter
+ihm mit dem Konstant-Urteil gleichbedeutend
+(`klassenfrei_gilt_genau_wenn_pauschal`). Erst wo Elemente mehr tragen als
+den Namen, trennen sich die Achsen — ein Ensemble durchgehend gleichen
+Merkmals wäre der Grenzfall, in dem Ganz- und Namenstausch darauf
+zusammenfallen. -/
+theorem pauschal_eindeutig_gilt_weiterhin {u : Objekt → Prop}
+    (h : Klassenfrei u) : Konstant u :=
+  pauschal_eindeutig h
+
 /-! ## Bilanz: Prüfen statt glauben
 
 Das Ensemble-Urteil über den Zeugen `Trio` wird hier tatsächlich berechnet
 (drei Elemente, zwei erfüllen das Urteil):
 - „Alle drei erfüllen es" — entscheidbar, Ergebnis: falsch.
 - „Mindestens eines erfüllt es" — entscheidbar, Ergebnis: wahr.
-Machbar ist das Pauschal-Urteil also wirklich — das ist keine Redewendung. -/
+Machbar sind die Mengenurteile also wirklich — das ist keine Redewendung. -/
 
 #eval @decide (∀ x : Trio, trioUrteil x) (ueberAlle_entscheidbar trioEndlich trioInst)
 #eval @decide (∃ x : Trio, trioUrteil x) (ueberExistenz_entscheidbar trioEndlich trioInst)
@@ -414,10 +637,11 @@ Machbar ist das Pauschal-Urteil also wirklich — das ist keine Redewendung. -/
 `#print axioms` für jedes Theorem dieses Modells. Das Modell deklariert
 KEINE eigenen Axiome — und vermeidet darüber hinaus die Kernlogik-Axiome
 von Lean (`propext`, `Quot.sound`, `Classical.choice`): Sogar die
-Machbarkeits-Beweise und die Zeugen kommen mit reiner konstruktiver Logik
-aus. Die erwartete Ausgabe ist für ALLE Einträge „does not depend on any
-axioms"; falls ein Beweis dennoch eines zieht, steht es hier schwarz auf
-weiß und wird im Begleittext benannt. -/
+Machbarkeits-Beweise, die Zeugen und die Ebene-4-Beweise (Alarmregel,
+Sensor-Fall) kommen mit reiner konstruktiver Logik aus. Die erwartete
+Ausgabe ist für ALLE Einträge „does not depend on any axioms"; falls ein
+Beweis dennoch eines zieht, steht es hier schwarz auf weiß und wird im
+Begleittext benannt. -/
 
 #print axioms tausch_links
 #print axioms tausch_rechts
@@ -433,9 +657,15 @@ weiß und wird im Begleittext benannt. -/
 #print axioms es_gibt_gueltige_pauschalen
 #print axioms keine_lizenz_fuer_einzelurteil
 #print axioms mehrheit_impliziert_nicht_instanz
+#print axioms dressur_urteil_ist_klassenfrei
 #print axioms korrektur_spezialisiert_nicht_ersetzt
 #print axioms jede_dressur_hat_bildung
 #print axioms zwang_am_absoluten_erzeugt_fehler
 #print axioms totale_ausnahme_schafft_basis_ab
 #print axioms pauschale_bestimmt_nicht_die_instanz
 #print axioms korrektur_bricht_pauschalitaet
+#print axioms merkmalurteil_ist_kennungsfrei
+#print axioms namens_unabhaengig_nicht_identisch_mit_konstant
+#print axioms merkmalsklassen_sind_klassenbildung
+#print axioms alarm_nicht_invariant_unter_ganztausch
+#print axioms pauschal_eindeutig_gilt_weiterhin
