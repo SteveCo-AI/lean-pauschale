@@ -1,0 +1,10 @@
+name = "pauschale"
+version = "0.1.0"
+defaultTargets = ["pauschale"]
+
+[[lean_lib]]
+name = "Pauschale"
+
+[[lean_exe]]
+name = "pauschale"
+root = "Main"
